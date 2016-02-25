@@ -2,7 +2,23 @@
 <%namespace name='static' file='/static_content.html'/>
 <%inherit file="/navigation.html"/>
 
-<%! from microsite_configuration.templatetags.microsite import platform_name %>
+<%!
+from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _
+
+from lms.djangoapps.ccx.overrides import get_current_ccx
+from microsite_configuration import microsite
+from microsite_configuration.templatetags.microsite import platform_name
+from openedx.core.djangoapps.user_api.accounts.image_helpers import get_profile_image_urls_for_user
+
+# App that handles subdomain specific branding
+from branding import api as branding_api
+
+%>
+<%! 
+# app that handles site status messages
+from status.status import get_site_status_msg
+%>
 
 <%block name="navigation_top">
 </%block>
@@ -13,4 +29,50 @@
 
 ## When unauthenticated, only show the about page link
 <%block name="navigation_global_links">
+	<li class="active"><a href="#">Qualifications</a></li>
+	<li><a href="#">Institutions</a></li>
+	<li><a href="#">Blog</a></li>
+	<li><a href="/login">Log In</a></li>
+</%block>
+
+<%block name="navigation_global_links_authenticated">
+	<li class="has-child" data-active="Qualifications">
+		<a href="#"><i class="fa fa-angle-down"></i> Qualifications</a>
+		<ul class="child-menu">
+			<li><a href="#">Item 1</a></li>
+			<li><a href="#">Item 2</a></li>
+		</ul>
+	</li>
+	<li data-active="Institutions"><a href="#">Institutions</a></li>
+	<li data-active="Courses"><a href="${marketing_link('COURSES')}">${_('Find Courses')}</a></li>
+	<li data-active="Blog"><a href="#">Blog</a></li>
+	<li class="separate" data-active="separate">&nbsp;</li>
+	<li data-active="user">
+		<a href="${reverse('dashboard')}" class="user-link">
+			<%
+				username = user.username
+				profile_image_url = get_profile_image_urls_for_user(user)['medium']
+			%>
+			${username}
+		</a>
+	</li>
+	<li>${microsite}</li>
+	<script type="text/javascript">
+		$(function(){
+			var current_url = $(location).attr('href');
+			var active_class = '';
+			if(current_url.indexOf('icollege.uk/courses') != -1){
+				active_class = 'Courses';
+			}else if(current_url.indexOf('icollege.uk/dashboard') != -1){
+				active_class = 'user';
+			}
+
+			$.each($('.left.nav-global.authenticated li'), function(index, item){
+				$(this).removeClass('active');
+				if($(this).data('active') == active_class){
+					$(this).addClass('active');
+				}
+			});
+		});
+	</script>
 </%block>
